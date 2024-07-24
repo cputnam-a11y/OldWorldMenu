@@ -1,6 +1,7 @@
 package fr.rader.oldworldmenu.mixin;
 
 import fr.rader.oldworldmenu.MoreWorldOptionsComponent;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.world.CreateWorldScreen;
 import net.minecraft.client.gui.screen.world.EditGameRulesScreen;
@@ -13,6 +14,7 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.resource.DataConfiguration;
 import net.minecraft.text.Text;
 import net.minecraft.world.Difficulty;
+import org.spongepowered.asm.mixin.Debug;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -22,6 +24,7 @@ import java.util.List;
 import static fr.rader.oldworldmenu.Constants.*;
 
 @Mixin(CreateWorldScreen.class)
+@Debug(export = true)
 public abstract class MixinCreateWorldScreen extends Screen {
 
     @Shadow
@@ -60,30 +63,31 @@ public abstract class MixinCreateWorldScreen extends Screen {
     }
 
     @Override
-    public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
-        renderBackground(matrices);
-        drawCenteredTextWithShadow(matrices, this.textRenderer, this.title, this.halfWidth, 20, -1);
-
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        renderBackground(context, mouseX, mouseY, delta);
+        context.getMatrices().push();
+        context.getMatrices().translate(0, 0, -10000);
+        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.halfWidth, 20, -1);
         int textPositionX = this.halfWidth - 100;
         if (this.isWorldOptionsToggled) {
-            drawTextWithShadow(matrices, this.textRenderer, SEED_LABEL, textPositionX, 47, GRAY_COLOR);
-            drawTextWithShadow(matrices, this.textRenderer, SEED_INFO_LABEL, textPositionX, 85, GRAY_COLOR);
+            context.drawTextWithShadow(this.textRenderer, SEED_LABEL, textPositionX, 47, GRAY_COLOR);
+            context.drawTextWithShadow(this.textRenderer, SEED_INFO_LABEL, textPositionX, 85, GRAY_COLOR);
 
-            this.moreWorldOptionsComponent.render(matrices);
+            this.moreWorldOptionsComponent.render(context);
         } else {
-            drawTextWithShadow(matrices, this.textRenderer, WORLD_NAME_LABEL, textPositionX, 47, GRAY_COLOR);
-            drawTextWithShadow(matrices, this.textRenderer, this.worldDirectoryName, textPositionX, 85, GRAY_COLOR);
+            context.drawTextWithShadow(this.textRenderer, WORLD_NAME_LABEL, textPositionX, 47, GRAY_COLOR);
+            context.drawTextWithShadow(this.textRenderer, this.worldDirectoryName, textPositionX, 85, GRAY_COLOR);
 
             textPositionX -= 50;
-            drawTextWithShadow(matrices, this.textRenderer, this.gameModeHelp1, textPositionX, 122, GRAY_COLOR);
-            drawTextWithShadow(matrices, this.textRenderer, this.gameModeHelp2, textPositionX, 134, GRAY_COLOR);
+            context.drawTextWithShadow(this.textRenderer, this.gameModeHelp1, textPositionX, 122, GRAY_COLOR);
+            context.drawTextWithShadow(this.textRenderer, this.gameModeHelp2, textPositionX, 134, GRAY_COLOR);
 
             if (!this.worldCreator.isDebug()) {
-                drawTextWithShadow(matrices, this.textRenderer, ALLOW_CHEATS_INFO_LABEL, textPositionX, 172, GRAY_COLOR);
+                context.drawTextWithShadow(this.textRenderer, ALLOW_CHEATS_INFO_LABEL, textPositionX, 172, GRAY_COLOR);
             }
         }
-
-        super.render(matrices, mouseX, mouseY, delta);
+        context.getMatrices().pop();
+        super.render(context, mouseX, mouseY, delta);
     }
 
     @Override
@@ -191,7 +195,6 @@ public abstract class MixinCreateWorldScreen extends Screen {
 
     @Override
     public void tick() {
-        this.worldName.tick();
         this.moreWorldOptionsComponent.tick();
     }
 
